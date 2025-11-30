@@ -2543,7 +2543,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 70
+  field of view: 60
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -2569,8 +2569,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.7, z: 0}
+  m_LocalRotation: {x: 0.6427876, y: 0, z: 0, w: 0.7660445}
+  m_LocalPosition: {x: 0, y: 9.848077, z: -1.7364821}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5431,7 +5431,7 @@ MonoBehaviour:
   m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
-    TrackingTarget: {fileID: 1846361585}
+    TrackingTarget: {fileID: 1642529761}
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
@@ -5462,13 +5462,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 777095616}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.7, z: 0}
+  m_LocalRotation: {x: 0.17364816, y: 0, z: 0, w: 0.9848078}
+  m_LocalPosition: {x: 0, y: 2.2, z: -3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 20, y: 0, z: 0}
 --- !u!114 &777095619
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11967,6 +11967,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SimpleMovementSystem
   _rigidbody: {fileID: 1711227163}
   _moveSpeed: 5
+  _rotationSpeed: 10
+  _directionReference: {fileID: 1846361585}
+  rightAngle: 120
+  leftAngle: -60
 --- !u!4 &1711227167 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6463582156032259737, guid: bb96394e9629f20408ea23d3760ba123, type: 3}
@@ -12001,8 +12005,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 761891a2abba91b4698a13e5b8f4f518, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraViewSwitcher
-  normalCam: {fileID: 1568796823}
-  topDownCam: {fileID: 1568796823}
+  normalCam: {fileID: 777095617}
+  topDownCam: {fileID: 777095617}
   normalPriority: 10
   topDownPriority: 11
 --- !u!4 &1721101245
@@ -14848,6 +14852,55 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2107821386}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &2130946555
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2130946557}
+  - component: {fileID: 2130946556}
+  m_Layer: 0
+  m_Name: MouseLookController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2130946556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2130946555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fb8c4e0a72a0b449a96287f420de361, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MouseLookController
+  yawRoot: {fileID: 1846361585}
+  pitchRoot: {fileID: 1642529761}
+  mouseSensitivity: 0.1
+  minPitch: -40
+  maxPitch: 70
+--- !u!4 &2130946557
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2130946555}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.4265, y: 0.05, z: -2.11555}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2134260108
 GameObject:
   m_ObjectHideFlags: 0
@@ -15139,3 +15192,4 @@ SceneRoots:
   - {fileID: 1568796825}
   - {fileID: 1721101245}
   - {fileID: 818655063}
+  - {fileID: 2130946557}

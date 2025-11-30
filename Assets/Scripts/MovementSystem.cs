@@ -9,15 +9,15 @@ public class SimpleMovementSystem : MonoBehaviour
     [SerializeField] private float _moveSpeed = 5f;
 
     [Header("Rotation")]
-    [SerializeField] private float _rotationSpeed = 10f;   // ★ 회전 속도 추가!
+    [SerializeField] private float _rotationSpeed = 10f;
 
-    // input direction from outside (x = left/right, y = forward/back)
+    [Header("Direction Reference (usually CameraPivot)")]
+    [SerializeField] private Transform _directionReference;
+
     private Vector2 _direction = Vector2.zero;
 
-    // world-space base forward direction (fixed at start)
     private Vector3 _baseForward;
-    private Vector3 _rightDir;
-    private Vector3 _leftDir;
+    private Vector3 _baseRight;
 
     [Header("Turn Angles")]
     [SerializeField] private float rightAngle = 90f;
@@ -27,17 +27,11 @@ public class SimpleMovementSystem : MonoBehaviour
 
     private void Awake()
     {
-        _baseForward = transform.forward;
-        _baseForward.y = 0f;
-        _baseForward.Normalize();
+        if (_rigidbody == null)
+            _rigidbody = GetComponent<Rigidbody>();
 
-        _rightDir = Quaternion.Euler(0f, rightAngle, 0f) * _baseForward;
-        _rightDir.y = 0f;
-        _rightDir.Normalize();
-
-        _leftDir = Quaternion.Euler(0f, leftAngle, 0f) * _baseForward;
-        _leftDir.y = 0f;
-        _leftDir.Normalize();
+        if (_directionReference == null)
+            _directionReference = transform;
     }
 
     public void SetDirection(Vector2 dir)
@@ -50,8 +44,26 @@ public class SimpleMovementSystem : MonoBehaviour
         _moveSpeed = speed;
     }
 
+    private void RecalculateBasis()
+    {
+        Vector3 fwd = _directionReference.forward;
+        fwd.y = 0f;
+
+        if (fwd.sqrMagnitude < 0.0001f)
+            fwd = Vector3.forward;
+
+        _baseForward = fwd.normalized;
+
+        _baseRight = Quaternion.Euler(0f, 90f, 0f) * _baseForward;
+        _baseRight.y = 0f;
+        _baseRight.Normalize();
+    }
+
     private void FixedUpdate()
     {
+        // camera(or pivot) might have rotated, so update every frame
+        RecalculateBasis();
+
         if (_direction.sqrMagnitude < 0.0001f)
             return;
 
@@ -70,7 +82,10 @@ public class SimpleMovementSystem : MonoBehaviour
         if (forwardPressed) logicDir.y += 1f;
         if (backwardPressed) logicDir.y -= 1f;
 
-        Vector3 move = new Vector3(logicDir.x, 0f, logicDir.y);
+        // move relative to camera
+        Vector3 move =
+            _baseRight * logicDir.x +
+            _baseForward * logicDir.y;
 
         if (move.sqrMagnitude > 1f)
             move.Normalize();
@@ -79,36 +94,44 @@ public class SimpleMovementSystem : MonoBehaviour
             _rigidbody.position + move * (_moveSpeed * Time.fixedDeltaTime);
         _rigidbody.MovePosition(newPos);
 
-        // ==== rotation direction ====
+        // rotation dirs based on camera forward
+        Vector3 rightRotDir =
+            Quaternion.Euler(0f, rightAngle, 0f) * _baseForward;
+        rightRotDir.y = 0f;
+        rightRotDir.Normalize();
+
+        Vector3 leftRotDir =
+            Quaternion.Euler(0f, leftAngle, 0f) * _baseForward;
+        leftRotDir.y = 0f;
+        leftRotDir.Normalize();
+
         Vector3 rotDir = Vector3.zero;
 
         if (verticalPressed && !rightPressed && !leftPressed)
             rotDir = _baseForward;
         else if (!verticalPressed && rightPressed)
-            rotDir = _rightDir;
+            rotDir = rightRotDir;
         else if (!verticalPressed && leftPressed)
-            rotDir = _leftDir;
+            rotDir = leftRotDir;
         else if (forwardPressed && rightPressed)
-            rotDir = (_baseForward + _rightDir).normalized;
+            rotDir = (_baseForward + rightRotDir).normalized;
         else if (forwardPressed && leftPressed)
-            rotDir = (_baseForward + _leftDir).normalized;
+            rotDir = (_baseForward + leftRotDir).normalized;
         else if (backwardPressed && rightPressed)
-            rotDir = (_baseForward + _leftDir).normalized;
+            rotDir = (_baseForward - rightRotDir).normalized;
         else if (backwardPressed && leftPressed)
-            rotDir = (_baseForward + _rightDir).normalized;
+            rotDir = (_baseForward - leftRotDir).normalized;
         else
             rotDir = move;
 
-        // ==== 회전 적용 ====
         if (rotDir.sqrMagnitude > 0.001f)
         {
             Quaternion targetRot = Quaternion.LookRotation(rotDir);
-
-            // ★ Inspector에서 조절 가능한 회전 속도 적용!
             transform.rotation = Quaternion.Slerp(
                 transform.rotation,
                 targetRot,
-                _rotationSpeed * Time.fixedDeltaTime);
+                _rotationSpeed * Time.fixedDeltaTime
+            );
         }
     }
 }
