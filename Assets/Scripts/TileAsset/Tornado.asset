@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4183044e5d4fd904e91de3b81ae7c229, type: 3}
+  m_Name: Tornado
+  m_EditorClassIdentifier: Assembly-CSharp::TileDefinition
+  id: Tornado
+  prefab: {fileID: 919132149155446097, guid: 978dcf4c9d1dde0448f0c5a42f86336a, type: 3}
+  size: {x: 1, y: 1, z: 1}
+  solid: 1
