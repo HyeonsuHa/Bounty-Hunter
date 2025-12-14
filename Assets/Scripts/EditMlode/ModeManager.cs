@@ -73,6 +73,21 @@ public class ModeManager : MonoBehaviour
         }
         Debug.Log($"[InputMap] Player:{_input.Player.enabled} Edit:{_input.EditMode.enabled}");
     }
+    public bool CanEnterPlayMode()
+    {
+        return PlayerPlacementManager.Instance != null &&
+               PlayerPlacementManager.Instance.IsPlayerPlaced;
+    }
 
+    public void RequestPlayMode()
+    {
+        if (!CanEnterPlayMode())
+        {
+            Debug.Log("플레이어를 먼저 배치하세요.");
+            return;
+        }
+
+        SetMode(GameMode.Play);
+    }
     public InputSystem_Actions Input => _input;
 }

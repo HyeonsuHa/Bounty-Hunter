@@ -20,27 +20,29 @@ public class TilePlacer3D : MonoBehaviour
     [SerializeField] private Material ghostMaterial;
 
     [Header("Drag Area")]
-    [SerializeField] private float holdToDragSeconds = 0.18f; // 이 시간 이상 누르면 드래그 모드
-    [SerializeField] private bool requireAllCellsFree = false; // true면 하나라도 막히면 전체 취소, false면 가능한 곳만 설치
+    [SerializeField] private float holdToDragSeconds = 0.18f;
+    [SerializeField] private bool requireAllCellsFree = false;
 
-    private GameObject _ghost; // 단일 고스트
 
-    // 드래그(배치)
+
+    private GameObject _ghost;
+
     private bool _holdingPlace;
     private bool _dragPlace;
     private float _placeHoldTimer;
     private Vector3Int _placeStartCell;
     private Vector3Int _placeCurrentCell;
 
-    // 드래그(삭제)
     private bool _holdingDelete;
     private bool _dragDelete;
     private float _deleteHoldTimer;
     private Vector3Int _deleteStartCell;
     private Vector3Int _deleteCurrentCell;
 
-    // 영역 고스트 풀
     private readonly List<GameObject> _areaGhostPool = new();
+
+    private int _rotIndex;
+    private Quaternion CurrentRotation => Quaternion.Euler(0f, _rotIndex * 90f, 0f);
 
     private void Awake()
     {
@@ -50,8 +52,11 @@ public class TilePlacer3D : MonoBehaviour
 
     private void OnEnable()
     {
-        ModeManager.Instance.OnModeChanged += OnModeChanged;
-        OnModeChanged(ModeManager.Instance.CurrentMode);
+        if (ModeManager.Instance != null)
+        {
+            ModeManager.Instance.OnModeChanged += OnModeChanged;
+            OnModeChanged(ModeManager.Instance.CurrentMode);
+        }
     }
 
     private void OnDisable()
@@ -78,42 +83,77 @@ public class TilePlacer3D : MonoBehaviour
 
     private void Update()
     {
+        if (ModeManager.Instance == null) return;
         if (ModeManager.Instance.CurrentMode != GameMode.Edit) return;
         if (!grid || !rayCamera) return;
 
         HandleHeightInput();
 
-        if (!TryGetXZCell(out var cellXZ))
+        var input = ModeManager.Instance.Input.EditMode;
+
+        HandleRotateInput(input); 
+
+        bool hasCell = TryGetXZCell(out var cellXZ);
+        Vector3Int hoverCell = hasCell
+            ? new Vector3Int(cellXZ.x, currentY, cellXZ.z)
+            : default;
+
+        if (!hasCell && !_holdingPlace && !_holdingDelete && !_dragPlace && !_dragDelete)
         {
             HideAllGhosts();
             ResetDragStates();
             return;
         }
 
-        Vector3Int hoverCell = new Vector3Int(cellXZ.x, currentY, cellXZ.z);
-        var input = ModeManager.Instance.Input.EditMode;
+        if (_holdingPlace || _dragPlace)
+            HandlePlaceDrag(input, hasCell, hoverCell);
 
-        // --- Place (좌클릭) ---
-        HandlePlaceDrag(input, hoverCell);
+        if (_holdingDelete || _dragDelete)
+            HandleDeleteDrag(input, hasCell, hoverCell);
 
-        // --- Delete (우클릭) ---
-        HandleDeleteDrag(input, hoverCell);
-
-        // 아무 드래그도 아닐 때는 기존 단일 고스트 표시
         if (!_holdingPlace && !_holdingDelete && !_dragPlace && !_dragDelete)
         {
-            HideAreaGhosts();
-            UpdateSingleGhost(hoverCell);
+            if (!hasCell)
+            {
+                HideAllGhosts();
+                ResetDragStates();
+                return;
+            }
+
+            HandlePlaceDrag(input, hasCell, hoverCell);
+            HandleDeleteDrag(input, hasCell, hoverCell);
+
+            if (!_holdingPlace && !_holdingDelete && !_dragPlace && !_dragDelete)
+            {
+                HideAreaGhosts();
+                UpdateSingleGhost(hoverCell);
+            }
         }
     }
 
-    private void HandlePlaceDrag(InputSystem_Actions.EditModeActions input, Vector3Int hoverCell)
+    private void HandleRotateInput(InputSystem_Actions.EditModeActions input)
     {
-        // 큰 타일은 드래그 배치 비활성(규칙 복잡)
+        if (input.RotateLeft.WasPressedThisFrame())
+            _rotIndex = (_rotIndex + 3) % 4;
+
+        if (input.RotateRight.WasPressedThisFrame())
+            _rotIndex = (_rotIndex + 1) % 4;
+
+        if (_ghost)
+            _ghost.transform.rotation = CurrentRotation;
+
+        for (int i = 0; i < _areaGhostPool.Count; i++)
+            if (_areaGhostPool[i])
+                _areaGhostPool[i].transform.rotation = CurrentRotation;
+    }
+    private void HandlePlaceDrag(InputSystem_Actions.EditModeActions input, bool hasCell, Vector3Int hoverCell)
+    {
         bool canArea = selectedTile && selectedTile.size == Vector3Int.one;
 
         if (input.Place.WasPressedThisFrame())
         {
+            if (!hasCell) return;
+
             _holdingPlace = true;
             _dragPlace = false;
             _placeHoldTimer = 0f;
@@ -125,20 +165,21 @@ public class TilePlacer3D : MonoBehaviour
         {
             _placeHoldTimer += Time.deltaTime;
 
+            if (hasCell)
+                _placeCurrentCell = hoverCell;
+
             if (canArea && !_dragPlace && _placeHoldTimer >= holdToDragSeconds)
                 _dragPlace = true;
 
             if (_dragPlace)
             {
-                _placeCurrentCell = hoverCell;
                 HideSingleGhost();
                 UpdateAreaGhostRect(_placeStartCell, _placeCurrentCell);
             }
             else
             {
-                // 아직 드래그 전: 단일 고스트
                 HideAreaGhosts();
-                UpdateSingleGhost(hoverCell);
+                if (hasCell) UpdateSingleGhost(_placeCurrentCell);
             }
         }
 
@@ -146,13 +187,11 @@ public class TilePlacer3D : MonoBehaviour
         {
             if (_dragPlace)
             {
-                // 사각형 설치
                 PlaceRect(_placeStartCell, _placeCurrentCell);
             }
             else
             {
-                // 단일 설치
-                TryPlace(hoverCell);
+                TryPlace(_placeCurrentCell);
             }
 
             _holdingPlace = false;
@@ -163,10 +202,12 @@ public class TilePlacer3D : MonoBehaviour
         }
     }
 
-    private void HandleDeleteDrag(InputSystem_Actions.EditModeActions input, Vector3Int hoverCell)
+    private void HandleDeleteDrag(InputSystem_Actions.EditModeActions input, bool hasCell, Vector3Int hoverCell)
     {
         if (input.Delete.WasPressedThisFrame())
         {
+            if (!hasCell) return;
+
             _holdingDelete = true;
             _dragDelete = false;
             _deleteHoldTimer = 0f;
@@ -178,12 +219,14 @@ public class TilePlacer3D : MonoBehaviour
         {
             _deleteHoldTimer += Time.deltaTime;
 
+            if (hasCell)
+                _deleteCurrentCell = hoverCell;
+
             if (!_dragDelete && _deleteHoldTimer >= holdToDragSeconds)
                 _dragDelete = true;
 
             if (_dragDelete)
             {
-                _deleteCurrentCell = hoverCell;
                 HideSingleGhost();
                 UpdateAreaGhostRect(_deleteStartCell, _deleteCurrentCell);
             }
@@ -197,7 +240,7 @@ public class TilePlacer3D : MonoBehaviour
             }
             else
             {
-                grid.RemoveAt(hoverCell);
+                RemoveAtWithPlayerCheck(_deleteCurrentCell);
             }
 
             _holdingDelete = false;
@@ -210,6 +253,7 @@ public class TilePlacer3D : MonoBehaviour
 
     private void HandleHeightInput()
     {
+        if (ModeManager.Instance == null) return;
         var input = ModeManager.Instance.Input.EditMode;
 
         if (input.RaiseY.WasPressedThisFrame())
@@ -239,18 +283,27 @@ public class TilePlacer3D : MonoBehaviour
         if (!selectedTile || !selectedTile.prefab) return;
         if (!grid.CanPlace(selectedTile, coord)) return;
 
-        grid.Place(selectedTile, coord);
+        if (selectedTile.isPlayerTile)
+        {
+            if (PlayerPlacementManager.Instance != null &&
+                !PlayerPlacementManager.Instance.CanPlacePlayer())
+                return;
+        }
+
+        var inst = grid.Place(selectedTile, coord, CurrentRotation);
+
+        if (selectedTile.isPlayerTile && inst != null && PlayerPlacementManager.Instance != null)
+        {
+            PlayerPlacementManager.Instance.RegisterPlayer(inst);
+        }
     }
 
-    // -----------------------
-    // Rect place/delete
-    // -----------------------
     private void PlaceRect(Vector3Int a, Vector3Int b)
     {
         if (!selectedTile || !selectedTile.prefab) return;
+
         if (selectedTile.size != Vector3Int.one)
         {
-            // 큰 타일은 안전하게 단일만
             TryPlace(b);
             return;
         }
@@ -260,13 +313,13 @@ public class TilePlacer3D : MonoBehaviour
         if (requireAllCellsFree)
         {
             foreach (var c in cells)
-                if (!grid.CanPlace(selectedTile, c)) return; // 전체 취소
+                if (!grid.CanPlace(selectedTile, c)) return;
         }
 
         foreach (var c in cells)
         {
             if (grid.CanPlace(selectedTile, c))
-                grid.Place(selectedTile, c);
+                TryPlace(c);
         }
     }
 
@@ -274,11 +327,8 @@ public class TilePlacer3D : MonoBehaviour
     {
         var cells = GetRectCellsXZ(a, b, currentY);
 
-        // 중복 Destroy 방지 위해: 시도는 그냥 좌표마다 해도 되지만
-        // inst가 여러 셀을 점유할 수 있어서 결과적으로 같은 타일을 여러번 remove하려 할 수 있음.
-        // MapGrid3D.RemoveAt이 이미 방어해주니 여기서는 단순 반복으로 충분.
         foreach (var c in cells)
-            grid.RemoveAt(c);
+            RemoveAtWithPlayerCheck(c);
     }
 
     private static List<Vector3Int> GetRectCellsXZ(Vector3Int a, Vector3Int b, int y)
@@ -295,21 +345,35 @@ public class TilePlacer3D : MonoBehaviour
 
         return list;
     }
+    private void RemoveAtWithPlayerCheck(Vector3Int coord)
+    {
+        if (grid == null) return;
 
-    // -----------------------
-    // Ghosts
-    // -----------------------
+        if (!grid.TryGetTile(coord, out var inst) || inst == null)
+            return;
+
+        bool wasPlayer = inst.definition != null && inst.definition.isPlayerTile;
+
+        bool removed = grid.RemoveAt(coord);
+        if (!removed) return;
+
+        if (wasPlayer && PlayerPlacementManager.Instance != null)
+            PlayerPlacementManager.Instance.UnregisterPlayer();
+    }
     private void EnsureSingleGhost()
     {
-        if (!showGhost || _ghost != null || !selectedTile || !selectedTile.prefab) return;
+        if (_ghost != null) return;
+        if (!selectedTile || !selectedTile.prefab) return;
 
         _ghost = Instantiate(selectedTile.prefab);
+        _ghost.transform.rotation = CurrentRotation;
         _ghost.name = "[Ghost] " + selectedTile.name;
 
         foreach (var col in _ghost.GetComponentsInChildren<Collider>())
             col.enabled = false;
 
         ApplyGhostMaterial(_ghost);
+        _ghost.SetActive(showGhost);
     }
 
     private void UpdateSingleGhost(Vector3Int coord)
@@ -325,19 +389,14 @@ public class TilePlacer3D : MonoBehaviour
 
         bool canPlace = selectedTile && grid.CanPlace(selectedTile, coord);
         _ghost.transform.position += Vector3.up * (canPlace ? 0f : 0.2f);
+        _ghost.transform.rotation = CurrentRotation;
     }
 
     private void UpdateAreaGhostRect(Vector3Int a, Vector3Int b)
     {
         if (!showGhost) { HideAreaGhosts(); return; }
         if (!selectedTile || !selectedTile.prefab) { HideAreaGhosts(); return; }
-
-        // 드래그 고스트는 1칸 타일만 지원
-        if (selectedTile.size != Vector3Int.one)
-        {
-            HideAreaGhosts();
-            return;
-        }
+        if (selectedTile.size != Vector3Int.one) { HideAreaGhosts(); return; }
 
         var cells = GetRectCellsXZ(a, b, currentY);
         EnsureAreaGhostPool(cells.Count);
@@ -356,6 +415,7 @@ public class TilePlacer3D : MonoBehaviour
 
             bool can = grid.CanPlace(selectedTile, c);
             g.transform.position += Vector3.up * (can ? 0f : 0.2f);
+            g.transform.rotation = CurrentRotation;
         }
     }
 
@@ -412,13 +472,15 @@ public class TilePlacer3D : MonoBehaviour
     {
         selectedTile = def;
 
+        ResetDragStates();
+        HideAllGhosts();
+
         if (_ghost)
         {
             Destroy(_ghost);
             _ghost = null;
         }
 
-        // 영역 고스트 풀도 타일 프리팹이 바뀌면 싹 갈아끼우는 게 안전
         for (int i = 0; i < _areaGhostPool.Count; i++)
             if (_areaGhostPool[i]) Destroy(_areaGhostPool[i]);
         _areaGhostPool.Clear();

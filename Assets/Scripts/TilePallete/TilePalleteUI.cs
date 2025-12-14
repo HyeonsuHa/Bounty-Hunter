@@ -7,8 +7,8 @@ using UnityEngine.UI;
 public class TilePaletteUI : MonoBehaviour
 {
     [Header("Refs")]
-    [SerializeField] private TilePlacer3D tilePlacer;   // 선택 반영 대상
-    [SerializeField] private ModeManager modeManager;   // Edit 모드 체크
+    [SerializeField] private TilePlacer3D tilePlacer;
+    [SerializeField] private ModeManager modeManager;
 
     [Header("Tiles (1,2,3... order)")]
     [SerializeField] private List<TileDefinition> tiles = new();
@@ -16,6 +16,7 @@ public class TilePaletteUI : MonoBehaviour
     [Header("UI")]
     [SerializeField] private Button buttonPrefab;
     [SerializeField] private Transform contentRoot;
+    [SerializeField] private GameObject uiRoot;
 
     [Header("Highlight")]
     [SerializeField] private Color normalColor = new Color(0.18f, 0.18f, 0.18f, 1f);
@@ -28,9 +29,11 @@ public class TilePaletteUI : MonoBehaviour
     {
         if (!tilePlacer) tilePlacer = FindFirstObjectByType<TilePlacer3D>();
         if (!modeManager) modeManager = ModeManager.Instance;
+        if (!uiRoot) uiRoot = contentRoot ? contentRoot.gameObject : gameObject;
 
         BuildButtons();
-        SelectIndex(0); // 시작은 1번 타일
+        if (_selectedIndex < 0 && tiles.Count > 0) SelectIndex(0);
+        else RefreshHighlight();
     }
 
     private void OnEnable()
@@ -51,13 +54,27 @@ public class TilePaletteUI : MonoBehaviour
     private void OnModeChanged(GameMode mode)
     {
         bool isEdit = (mode == GameMode.Edit);
-        // Edit 모드에서만 UI 표시
-        if (contentRoot) contentRoot.gameObject.SetActive(isEdit);
+
+        if (uiRoot) uiRoot.SetActive(isEdit);
+
+        if (isEdit)
+        {
+            if (_buttons.Count == 0 && tiles.Count > 0)
+                BuildButtons();
+
+            if (_selectedIndex < 0 && tiles.Count > 0)
+                _selectedIndex = 0;
+
+            if (_selectedIndex >= 0 && _selectedIndex < tiles.Count && tiles[_selectedIndex] != null)
+                if (tilePlacer) tilePlacer.SetSelectedTile(tiles[_selectedIndex]);
+
+            RefreshHighlight();
+        }
     }
 
     private void Update()
     {
-        // 숫자키 1/2/3 선택 (New Input System)
+        if (modeManager != null && modeManager.CurrentMode != GameMode.Edit) return;
         if (Keyboard.current == null) return;
 
         if (Keyboard.current.digit1Key.wasPressedThisFrame || Keyboard.current.numpad1Key.wasPressedThisFrame)
@@ -70,9 +87,24 @@ public class TilePaletteUI : MonoBehaviour
             SelectIndex(2);
     }
 
+    public void Rebuild()
+    {
+        BuildButtons();
+        if (tiles.Count > 0)
+        {
+            int idx = Mathf.Clamp(_selectedIndex, 0, tiles.Count - 1);
+            if (tiles[idx] == null) idx = 0;
+            SelectIndex(idx);
+        }
+        else
+        {
+            _selectedIndex = -1;
+            RefreshHighlight();
+        }
+    }
+
     private void BuildButtons()
     {
-        // 기존 버튼 제거
         foreach (var b in _buttons)
             if (b) Destroy(b.gameObject);
         _buttons.Clear();
@@ -83,19 +115,33 @@ public class TilePaletteUI : MonoBehaviour
         {
             int idx = i;
             var def = tiles[i];
+            if (!def) continue;
 
             var btn = Instantiate(buttonPrefab, contentRoot);
             _buttons.Add(btn);
 
-            // 라벨: "1 LavaTile" 형태
+            var images = btn.GetComponentsInChildren<Image>();
+            foreach (var img in images)
+            {
+                if (img.gameObject.name == "Icon")
+                {
+                    img.sprite = def.icon;
+                    img.enabled = def.icon != null;
+                    break;
+                }
+            }
+
+            // 텍스트 (있으면)
             var label = btn.GetComponentInChildren<TMP_Text>();
-            if (label) label.text = $"{idx + 1}. {def.name}";
+            if (label) label.text = $"{idx + 1}";
 
             btn.onClick.RemoveAllListeners();
             btn.onClick.AddListener(() => SelectIndex(idx));
 
             SetButtonColor(btn, normalColor);
         }
+
+        RefreshHighlight();
     }
 
     private void SelectIndex(int idx)
@@ -105,10 +151,8 @@ public class TilePaletteUI : MonoBehaviour
 
         _selectedIndex = idx;
 
-        // 타일 설치 시스템에 반영
         if (tilePlacer) tilePlacer.SetSelectedTile(tiles[idx]);
 
-        // 하이라이트 갱신
         RefreshHighlight();
     }
 
