@@ -17,13 +17,12 @@ public class TilePlacer3D : MonoBehaviour
 
     [Header("Ghost (single)")]
     [SerializeField] private bool showGhost = true;
-    [SerializeField] private Material ghostMaterial;
+
+    [SerializeField] private Transform ghostRoot;
 
     [Header("Drag Area")]
     [SerializeField] private float holdToDragSeconds = 0.18f;
     [SerializeField] private bool requireAllCellsFree = false;
-
-
 
     private GameObject _ghost;
 
@@ -48,6 +47,13 @@ public class TilePlacer3D : MonoBehaviour
     {
         if (!grid) grid = FindFirstObjectByType<MapGrid3D>();
         if (!rayCamera) rayCamera = Camera.main;
+
+        if (!ghostRoot)
+        {
+            var go = GameObject.Find("GhostRoot");
+            if (!go) go = new GameObject("GhostRoot");
+            ghostRoot = go.transform;
+        }
     }
 
     private void OnEnable()
@@ -91,7 +97,7 @@ public class TilePlacer3D : MonoBehaviour
 
         var input = ModeManager.Instance.Input.EditMode;
 
-        HandleRotateInput(input); 
+        HandleRotateInput(input);
 
         bool hasCell = TryGetXZCell(out var cellXZ);
         Vector3Int hoverCell = hasCell
@@ -146,6 +152,7 @@ public class TilePlacer3D : MonoBehaviour
             if (_areaGhostPool[i])
                 _areaGhostPool[i].transform.rotation = CurrentRotation;
     }
+
     private void HandlePlaceDrag(InputSystem_Actions.EditModeActions input, bool hasCell, Vector3Int hoverCell)
     {
         bool canArea = selectedTile && selectedTile.size == Vector3Int.one;
@@ -343,6 +350,7 @@ public class TilePlacer3D : MonoBehaviour
 
         return list;
     }
+
     private void RemoveAtWithPlayerCheck(Vector3Int coord)
     {
         if (grid == null) return;
@@ -358,19 +366,21 @@ public class TilePlacer3D : MonoBehaviour
         if (wasPlayer && PlayerPlacementManager.Instance != null)
             PlayerPlacementManager.Instance.UnregisterPlayer(inst.gameObject);
     }
+
     private void EnsureSingleGhost()
     {
         if (_ghost != null) return;
         if (!selectedTile || !selectedTile.prefab) return;
 
-        _ghost = Instantiate(selectedTile.prefab);
+        _ghost = Instantiate(selectedTile.prefab, ghostRoot);
         _ghost.transform.rotation = CurrentRotation;
         _ghost.name = "[Ghost] " + selectedTile.name;
 
         foreach (var col in _ghost.GetComponentsInChildren<Collider>())
             col.enabled = false;
 
-        ApplyGhostMaterial(_ghost);
+        EnsureOverlayComponent(_ghost);
+
         _ghost.SetActive(showGhost);
     }
 
@@ -386,8 +396,13 @@ public class TilePlacer3D : MonoBehaviour
         _ghost.transform.position = grid.CellToWorldCenter(coord);
 
         bool canPlace = selectedTile && grid.CanPlace(selectedTile, coord);
+
+
         _ghost.transform.position += Vector3.up * (canPlace ? 0f : 0.2f);
         _ghost.transform.rotation = CurrentRotation;
+
+        var overlay = _ghost.GetComponent<GhostOverlayController>();
+        if (overlay) overlay.SetCanPlace(canPlace);
     }
 
     private void UpdateAreaGhostRect(Vector3Int a, Vector3Int b)
@@ -414,6 +429,9 @@ public class TilePlacer3D : MonoBehaviour
             bool can = grid.CanPlace(selectedTile, c);
             g.transform.position += Vector3.up * (can ? 0f : 0.2f);
             g.transform.rotation = CurrentRotation;
+
+            var overlay = g.GetComponent<GhostOverlayController>();
+            if (overlay) overlay.SetCanPlace(can);
         }
     }
 
@@ -421,23 +439,23 @@ public class TilePlacer3D : MonoBehaviour
     {
         while (_areaGhostPool.Count < need)
         {
-            var g = Instantiate(selectedTile.prefab);
+            var g = Instantiate(selectedTile.prefab, ghostRoot);
             g.name = "[AreaGhost] " + selectedTile.name;
 
             foreach (var col in g.GetComponentsInChildren<Collider>())
                 col.enabled = false;
 
-            ApplyGhostMaterial(g);
+            EnsureOverlayComponent(g);
+
             _areaGhostPool.Add(g);
         }
     }
 
-    private void ApplyGhostMaterial(GameObject go)
+    private static void EnsureOverlayComponent(GameObject go)
     {
-        if (ghostMaterial == null) return;
-
-        foreach (var r in go.GetComponentsInChildren<Renderer>())
-            r.sharedMaterial = ghostMaterial;
+        if (!go) return;
+        if (!go.GetComponent<GhostOverlayController>())
+            go.AddComponent<GhostOverlayController>();
     }
 
     private void HideSingleGhost()
