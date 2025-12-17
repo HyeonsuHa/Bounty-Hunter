@@ -1,4 +1,4 @@
-Shader "Custom/HybridLava"
+Shader "Custom/HybridLava_Opaque"
 {
     Properties
     {
@@ -13,19 +13,20 @@ Shader "Custom/HybridLava"
 
     SubShader
     {
-        Tags { "RenderType"="Transparent" "Queue"="Transparent" }
-        Blend SrcAlpha OneMinusSrcAlpha
-        ZWrite Off
+        Tags { "RenderType"="Opaque" "Queue"="Geometry" }
+        ZWrite On
+        Cull Back
 
         Pass
         {
             Name "LavaPass"
+            Tags { "LightMode"="UniversalForward" }
+
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            // 텍스처
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
 
@@ -35,7 +36,6 @@ Shader "Custom/HybridLava"
             float  _Distortion;
             float  _NoiseScale;
 
-            // --------- 절차적 노이즈(왜곡용) ----------
             float hash(float2 p)
             {
                 return frac(sin(dot(p, float2(41.3, 89.7))) * 43758.5453);
@@ -104,14 +104,12 @@ Shader "Custom/HybridLava"
                 flowUV += warp * _Distortion;
 
                 float2 texUV = flowUV * _TexTiling.xy;
-
                 float4 texCol = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, texUV);
 
                 float3 finalCol = texCol.rgb * _Emission;
 
-                return float4(finalCol, texCol.a);
+                return float4(finalCol, 1.0);
             }
-
             ENDHLSL
         }
     }

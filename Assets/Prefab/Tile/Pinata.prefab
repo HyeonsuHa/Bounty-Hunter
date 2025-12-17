@@ -113,6 +113,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 350e97b5e04ae924f8a86404f72c883f, type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 350e97b5e04ae924f8a86404f72c883f, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: d636bdb07f47a7e45a5f1e83522bf031, type: 2}
+    - target: {fileID: -7511558181221131132, guid: 350e97b5e04ae924f8a86404f72c883f, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: d636bdb07f47a7e45a5f1e83522bf031, type: 2}
     - target: {fileID: 919132149155446097, guid: 350e97b5e04ae924f8a86404f72c883f, type: 3}
       propertyPath: m_Name
       value: Pinata
@@ -137,6 +149,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 350e97b5e04ae924f8a86404f72c883f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6301177822112911347}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 350e97b5e04ae924f8a86404f72c883f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4238255018978707726}
   m_SourcePrefab: {fileID: 100100000, guid: 350e97b5e04ae924f8a86404f72c883f, type: 3}
 --- !u!4 &2632896267632592146 stripped
 Transform:
@@ -214,3 +229,22 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &4238255018978707726
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3441380789114183592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16453486bd6196749bf287624e231fc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PinataImpactVFXOnHit
+  immediateVfxPrefabs:
+  - {fileID: 5502384443862763269, guid: 4801ed5fd713e1147a25f9616183a3e6, type: 3}
+  delayedVfxPrefabs:
+  - {fileID: 206891607381439814, guid: 186feca6a44f00f4bb721fc4eec733d0, type: 3}
+  delayedVfxDelay: 1
+  vfxOffset: {x: 0, y: 0.2, z: 0}
+  playerTag: Player

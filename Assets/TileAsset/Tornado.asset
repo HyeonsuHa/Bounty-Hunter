@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Tornado
   m_EditorClassIdentifier: Assembly-CSharp::TileDefinition
   displayName: 
-  prefab: {fileID: 7220146587842082485, guid: d485ce333afa73c46ad00e9889e507d4, type: 3}
+  prefab: {fileID: 8359632937061897637, guid: decff8d42d5d320478356d8ef4e09de3, type: 3}
   size: {x: 1, y: 1, z: 1}
   icon: {fileID: 21300000, guid: f589f43c6ce68a347900fb955ecc7322, type: 3}
   isPlayerTile: 0
