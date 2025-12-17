@@ -283,18 +283,16 @@ public class TilePlacer3D : MonoBehaviour
         if (!selectedTile || !selectedTile.prefab) return;
         if (!grid.CanPlace(selectedTile, coord)) return;
 
-        if (selectedTile.isPlayerTile)
+        if (selectedTile.isPlayerTile && PlayerPlacementManager.Instance != null)
         {
-            if (PlayerPlacementManager.Instance != null &&
-                !PlayerPlacementManager.Instance.CanPlacePlayer())
-                return;
+            PlayerPlacementManager.Instance.RemoveExistingPlayerFromGridIfAny(grid);
         }
 
         var inst = grid.Place(selectedTile, coord, CurrentRotation);
 
         if (selectedTile.isPlayerTile && inst != null && PlayerPlacementManager.Instance != null)
         {
-            PlayerPlacementManager.Instance.RegisterPlayer(inst);
+            PlayerPlacementManager.Instance.RegisterPlayer(inst.gameObject);
         }
     }
 
@@ -358,7 +356,7 @@ public class TilePlacer3D : MonoBehaviour
         if (!removed) return;
 
         if (wasPlayer && PlayerPlacementManager.Instance != null)
-            PlayerPlacementManager.Instance.UnregisterPlayer();
+            PlayerPlacementManager.Instance.UnregisterPlayer(inst.gameObject);
     }
     private void EnsureSingleGhost()
     {

@@ -16,6 +16,7 @@ public class TilePaletteUI : MonoBehaviour
     [Header("UI")]
     [SerializeField] private Button buttonPrefab;
     [SerializeField] private Transform contentRoot;
+
     [SerializeField] private GameObject uiRoot;
 
     [Header("Highlight")]
@@ -25,11 +26,29 @@ public class TilePaletteUI : MonoBehaviour
     private readonly List<Button> _buttons = new();
     private int _selectedIndex = -1;
 
+    private CanvasGroup _cg;
+
     private void Awake()
     {
         if (!tilePlacer) tilePlacer = FindFirstObjectByType<TilePlacer3D>();
         if (!modeManager) modeManager = ModeManager.Instance;
-        if (!uiRoot) uiRoot = contentRoot ? contentRoot.gameObject : gameObject;
+
+        if (!uiRoot)
+        {
+            if (contentRoot && contentRoot.parent)
+                uiRoot = contentRoot.parent.gameObject;
+            else
+                uiRoot = gameObject; // 최후의 fallback
+        }
+
+        if (uiRoot == gameObject)
+        {
+            Debug.LogWarning("[TilePaletteUI] uiRoot가 TilePaletteUI가 붙은 오브젝트와 같습니다. " +
+                             "SetActive로 끄면 스크립트가 비활성화되어 다시 Edit로 돌아와도 UI가 안 뜰 수 있어 CanvasGroup으로 숨깁니다.");
+        }
+
+        _cg = uiRoot.GetComponent<CanvasGroup>();
+        if (_cg == null) _cg = uiRoot.AddComponent<CanvasGroup>();
 
         BuildButtons();
         if (_selectedIndex < 0 && tiles.Count > 0) SelectIndex(0);
@@ -55,21 +74,29 @@ public class TilePaletteUI : MonoBehaviour
     {
         bool isEdit = (mode == GameMode.Edit);
 
-        if (uiRoot) uiRoot.SetActive(isEdit);
+        SetUIVisible(isEdit);
 
-        if (isEdit)
-        {
-            if (_buttons.Count == 0 && tiles.Count > 0)
-                BuildButtons();
+        if (!isEdit) return;
 
-            if (_selectedIndex < 0 && tiles.Count > 0)
-                _selectedIndex = 0;
+        if (_buttons.Count == 0 && tiles.Count > 0)
+            BuildButtons();
 
-            if (_selectedIndex >= 0 && _selectedIndex < tiles.Count && tiles[_selectedIndex] != null)
-                if (tilePlacer) tilePlacer.SetSelectedTile(tiles[_selectedIndex]);
+        if (_selectedIndex < 0 && tiles.Count > 0)
+            _selectedIndex = 0;
 
-            RefreshHighlight();
-        }
+        if (_selectedIndex >= 0 && _selectedIndex < tiles.Count && tiles[_selectedIndex] != null)
+            if (tilePlacer) tilePlacer.SetSelectedTile(tiles[_selectedIndex]);
+
+        RefreshHighlight();
+    }
+
+    private void SetUIVisible(bool visible)
+    {
+        if (_cg == null) return;
+
+        _cg.alpha = visible ? 1f : 0f;
+        _cg.interactable = visible;
+        _cg.blocksRaycasts = visible;
     }
 
     private void Update()
@@ -131,7 +158,6 @@ public class TilePaletteUI : MonoBehaviour
                 }
             }
 
-            // 텍스트 (있으면)
             var label = btn.GetComponentInChildren<TMP_Text>();
             if (label) label.text = $"{idx + 1}";
 

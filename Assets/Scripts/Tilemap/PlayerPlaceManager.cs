@@ -4,48 +4,64 @@ public class PlayerPlacementManager : MonoBehaviour
 {
     public static PlayerPlacementManager Instance { get; private set; }
 
-    [Header("Enable when player placed")]
-    [SerializeField] private GameObject[] enableOnPlaced;
+    public bool IsPlayerPlaced => CurrentPlayer != null;
+    public GameObject CurrentPlayer { get; private set; }
 
-    private TileInstance _playerTile;
-
-    public bool IsPlayerPlaced => _playerTile != null;
+    public event System.Action<GameObject> OnPlayerPlaced;
+    public event System.Action OnPlayerRemoved;
 
     private void Awake()
     {
+        if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
-        SetSystemsActive(false);
+        DontDestroyOnLoad(gameObject);
     }
 
-    public bool CanPlacePlayer()
+    /// <summary>플레이어 타일(프리팹 인스턴스)을 등록</summary>
+    public void RegisterPlayer(GameObject playerGO)
     {
-        return _playerTile == null;
+        if (playerGO == null) return;
+
+        if (CurrentPlayer != null && CurrentPlayer != playerGO)
+        {
+            Destroy(CurrentPlayer);
+        }
+
+        CurrentPlayer = playerGO;
+        OnPlayerPlaced?.Invoke(CurrentPlayer);
     }
 
-    public void RegisterPlayer(TileInstance tile)
-    {
-        if (tile == null) return;
-        if (_playerTile != null) return;
-
-        _playerTile = tile;
-        SetSystemsActive(true);
-    }
-
+    /// <summary>플레이어가 삭제되었을 때</summary>
     public void UnregisterPlayer()
     {
-        _playerTile = null;
-        SetSystemsActive(false);
+        UnregisterPlayer(CurrentPlayer);
     }
 
-    public bool IsThisPlayerTile(TileInstance tile)
+    public void UnregisterPlayer(GameObject playerGO)
     {
-        return tile != null && tile == _playerTile;
+        if (CurrentPlayer == null) return;
+        if (playerGO != null && playerGO != CurrentPlayer) return;
+
+        CurrentPlayer = null;
+        OnPlayerRemoved?.Invoke();
     }
 
-    private void SetSystemsActive(bool active)
+    public void RemoveExistingPlayerFromGridIfAny(MapGrid3D grid)
     {
-        if (enableOnPlaced == null) return;
-        foreach (var go in enableOnPlaced)
-            if (go) go.SetActive(active);
+        if (grid == null) return;
+        if (CurrentPlayer == null) return;
+
+        if (grid.TryGetCellOfInstance(CurrentPlayer, out var coord))
+        {
+            // grid.RemoveAt에서 Destroy가 일어나므로
+            grid.RemoveAt(coord);
+        }
+        else
+        {
+            Destroy(CurrentPlayer);
+        }
+
+        CurrentPlayer = null;
+        OnPlayerRemoved?.Invoke();
     }
 }

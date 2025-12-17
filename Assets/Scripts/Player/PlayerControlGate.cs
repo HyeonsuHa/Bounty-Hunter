@@ -66,7 +66,8 @@ public class PlayerControlGate : MonoBehaviour
         if (lockPhysicsInEdit && rb != null)
         {
             if (!isPlay)
-            {
+            { 
+                if (rb.isKinematic) rb.isKinematic = false;
                 rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
                 rb.isKinematic = true;

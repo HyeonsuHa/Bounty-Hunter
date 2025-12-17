@@ -93,4 +93,18 @@ public class MapGrid3D : MonoBehaviour
         Vector3 p = CellToWorld(cell);
         return p + new Vector3(cellSize.x * 0.5f, 0f, cellSize.z * 0.5f);
     }
+    public bool TryGetCellOfInstance(GameObject go, out Vector3Int coord)
+    {
+        foreach (var kv in _tiles)
+        {
+            if (kv.Value != null && kv.Value.gameObject == go)
+            {
+                coord = kv.Key;
+                return true;
+            }
+        }
+
+        coord = default;
+        return false;
+    }
 }

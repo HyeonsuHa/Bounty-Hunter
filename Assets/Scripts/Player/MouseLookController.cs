@@ -59,4 +59,15 @@ public class MouseLookController : MonoBehaviour
         // 최종 적용 (Z=0 고정)
         cameraTarget.localRotation = Quaternion.Euler(_pitchX, _yawY, 0f);
     }
+
+    public void SetTarget(Transform t)
+    {
+        cameraTarget = t;
+        if (cameraTarget != null)
+        {
+            Vector3 e = cameraTarget.localEulerAngles;
+            _pitchX = (e.x > 180f) ? e.x - 360f : e.x;
+            _yawY = (e.y > 180f) ? e.y - 360f : e.y;
+        }
+    }
 }
