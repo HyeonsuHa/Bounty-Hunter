@@ -28,6 +28,10 @@ public class PlayerPlacementManager : MonoBehaviour
         }
 
         CurrentPlayer = playerGO;
+
+        var respawn = CurrentPlayer.GetComponent<PlayerRespawnController>();
+        if (respawn) respawn.CacheSpawnPose();
+
         OnPlayerPlaced?.Invoke(CurrentPlayer);
     }
 

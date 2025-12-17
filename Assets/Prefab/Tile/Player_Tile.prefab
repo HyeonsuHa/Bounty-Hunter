@@ -125,10 +125,34 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5978688025392802851, guid: bb96394e9629f20408ea23d3760ba123, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3553989064421103722}
+    - targetCorrespondingSourceObject: {fileID: 5978688025392802851, guid: bb96394e9629f20408ea23d3760ba123, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8457996799560813130}
     - targetCorrespondingSourceObject: {fileID: 8539354089363673371, guid: bb96394e9629f20408ea23d3760ba123, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6424941898148175260}
   m_SourcePrefab: {fileID: 100100000, guid: bb96394e9629f20408ea23d3760ba123, type: 3}
+--- !u!54 &783114914964891957 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 3634792020985765841, guid: bb96394e9629f20408ea23d3760ba123, type: 3}
+  m_PrefabInstance: {fileID: 4084570010088716004}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &964547054237285850 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3876909503248812862, guid: bb96394e9629f20408ea23d3760ba123, type: 3}
+  m_PrefabInstance: {fileID: 4084570010088716004}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7662839432749669063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 872638b8700730f4c862d011bf04c428, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInputDriver
+--- !u!137 &4386340015616444273 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 319799319419646357, guid: bb96394e9629f20408ea23d3760ba123, type: 3}
+  m_PrefabInstance: {fileID: 4084570010088716004}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &5633633171737159679 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8539354089363673371, guid: bb96394e9629f20408ea23d3760ba123, type: 3}
@@ -169,6 +193,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b31a24838e099a49a4bc1d702090673, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraPivotController
+--- !u!114 &7328019156374237320 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6709541356324030060, guid: bb96394e9629f20408ea23d3760ba123, type: 3}
+  m_PrefabInstance: {fileID: 4084570010088716004}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7662839432749669063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36718f73f5619544db77fc2dd105fcf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SimpleMovementSystem
 --- !u!1 &7662839432749669063 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5978688025392802851, guid: bb96394e9629f20408ea23d3760ba123, type: 3}
@@ -197,3 +232,25 @@ CapsuleCollider:
   m_Height: 1.8635018
   m_Direction: 1
   m_Center: {x: 0, y: 0.87369454, z: 0}
+--- !u!114 &8457996799560813130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7662839432749669063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d43a202cdb35b7d46a429b3a0aafb435, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerRespawnController
+  respawnDelay: 3
+  spawnPoint: {fileID: 0}
+  disableScripts:
+  - {fileID: 7328019156374237320}
+  - {fileID: 964547054237285850}
+  rb: {fileID: 783114914964891957}
+  collidersToDisable:
+  - {fileID: 3553989064421103722}
+  renderersToHide:
+  - {fileID: 4386340015616444273}
