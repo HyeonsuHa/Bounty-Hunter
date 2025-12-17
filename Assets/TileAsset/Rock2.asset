@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Rock2
   m_EditorClassIdentifier: Assembly-CSharp::TileDefinition
   displayName: Bridge
-  prefab: {fileID: 919132149155446097, guid: d99ddc304a1fcde498a3da160d64b172, type: 3}
+  prefab: {fileID: 950751613514715590, guid: 61fa027f2cdcc6b40b4a156f94d7cefe, type: 3}
   size: {x: 1, y: 1, z: 1}
   icon: {fileID: 21300000, guid: d677259ecdf0f4a489b68bbd89b7e014, type: 3}
   isPlayerTile: 0

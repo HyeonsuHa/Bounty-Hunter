@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Bridge
   m_EditorClassIdentifier: Assembly-CSharp::TileDefinition
   displayName: Bridge
-  prefab: {fileID: 919132149155446097, guid: 3efde589e3245c8408491ca75824d19b, type: 3}
+  prefab: {fileID: 4964990708475927558, guid: 4d5d886b7b6cadf4db64c01c25c2b883, type: 3}
   size: {x: 1, y: 1, z: 1}
   icon: {fileID: 21300000, guid: 47667771b1c997c419d88bbca04b188c, type: 3}
   isPlayerTile: 0

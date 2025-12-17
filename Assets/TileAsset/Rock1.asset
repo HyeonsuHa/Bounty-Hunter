@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Rock1
   m_EditorClassIdentifier: Assembly-CSharp::TileDefinition
   displayName: Rock1
-  prefab: {fileID: 919132149155446097, guid: 9c3d17d44131b7d46babd81d7791f932, type: 3}
+  prefab: {fileID: 4656821281007992319, guid: 17d8a95a45809164f958ef9057fbfae6, type: 3}
   size: {x: 1, y: 1, z: 1}
   icon: {fileID: 21300000, guid: f6e9c592ea638ea49a127bde05f2b55d, type: 3}
   isPlayerTile: 0

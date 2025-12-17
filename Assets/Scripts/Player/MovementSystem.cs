@@ -25,17 +25,21 @@ public class SimpleMovementSystem : MonoBehaviour
 
     private const float EPS = 0.1f;
 
-    private void Awake()
-    {
-        if (_rigidbody == null)
-            _rigidbody = GetComponent<Rigidbody>();
+    private bool _airLocked;
+    private Vector2 _airLockedDir; // 점프 순간 입력 방향(고정)
 
-        if (_directionReference == null)
-            _directionReference = transform;
+    public void SetAirLock(bool locked, Vector2 lockedDir)
+    {
+        _airLocked = locked;
+        _airLockedDir = lockedDir;
     }
+
+    public bool IsAirLocked => _airLocked;
 
     public void SetDirection(Vector2 dir)
     {
+        // 공중에서는 입력으로 방향 변경 금지
+        if (_airLocked) return;
         _direction = dir;
     }
 
@@ -64,7 +68,9 @@ public class SimpleMovementSystem : MonoBehaviour
         // camera(or pivot) might have rotated, so update every frame
         RecalculateBasis();
 
-        if (_direction.sqrMagnitude < 0.0001f)
+        Vector2 usedDir = _airLocked ? _airLockedDir : _direction;
+
+        if (usedDir.sqrMagnitude < 0.0001f)
             return;
 
         float rawX = _direction.x;
@@ -82,16 +88,10 @@ public class SimpleMovementSystem : MonoBehaviour
         if (forwardPressed) logicDir.y += 1f;
         if (backwardPressed) logicDir.y -= 1f;
 
-        // move relative to camera
-        Vector3 move =
-            _baseRight * logicDir.x +
-            _baseForward * logicDir.y;
+        Vector3 move = _baseRight * logicDir.x + _baseForward * logicDir.y;
+        if (move.sqrMagnitude > 1f) move.Normalize();
 
-        if (move.sqrMagnitude > 1f)
-            move.Normalize();
-
-        Vector3 newPos =
-            _rigidbody.position + move * (_moveSpeed * Time.fixedDeltaTime);
+        Vector3 newPos = _rigidbody.position + move * (_moveSpeed * Time.fixedDeltaTime);
         _rigidbody.MovePosition(newPos);
 
         // rotation dirs based on camera forward

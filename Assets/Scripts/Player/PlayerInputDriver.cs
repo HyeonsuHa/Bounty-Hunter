@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Animator))]
 public class PlayerInputDriver : MonoBehaviour
 {
-    public float jumpForce = 5f;
+    public float jumpHeight = 1.5f;
     public float groundCheckDistance = 0.2f;
     public LayerMask groundMask;
 
@@ -16,6 +16,9 @@ public class PlayerInputDriver : MonoBehaviour
     private Animator _animator;
 
     private bool _isGrounded;
+
+    private Vector2 _currentMoveInput;
+    private bool _wasGrounded;
 
     private void Awake()
     {
@@ -48,6 +51,7 @@ public class PlayerInputDriver : MonoBehaviour
     private void OnMove(InputAction.CallbackContext ctx)
     {
         Vector2 dir = ctx.ReadValue<Vector2>();
+        _currentMoveInput = dir;
 
         _moveSystem.SetDirection(dir);
         _animator.SetMoveInput(dir);
@@ -56,19 +60,23 @@ public class PlayerInputDriver : MonoBehaviour
     private void OnJump(InputAction.CallbackContext ctx)
     {
         if (!ctx.performed) return;
+        if (!_isGrounded) return;
 
-        if (_isGrounded)
-        {
-            // 수직 속도 초기화 후 점프 힘 추가
-            Vector3 vel = _rigidbody.linearVelocity;
-            vel.y = 0f;
-            _rigidbody.linearVelocity = vel;
+        // 제자리 점프도 가능: 입력이 0이어도 에어락 걸면 그냥 0으로 유지됨
+        _moveSystem.SetAirLock(true, _currentMoveInput);
 
-            _rigidbody.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
+        // 점프 시작 시 수직 속도 리셋
+        Vector3 vel = _rigidbody.linearVelocity;
+        vel.y = 0f;
+        _rigidbody.linearVelocity = vel;
 
-            // 애니메이션 트리거는 확장 메서드 이용
-            _animator.DoJump();
-        }
+        // 원하는 높이만큼 올라가기 위한 초기 속도 v = sqrt(2gh)
+        float g = Mathf.Abs(Physics.gravity.y);
+        float jumpVelocity = Mathf.Sqrt(2f * g * jumpHeight);
+
+        _rigidbody.AddForce(Vector3.up * jumpVelocity, ForceMode.VelocityChange);
+
+        _animator.DoJump();
     }
 
     private void Update()
@@ -79,6 +87,9 @@ public class PlayerInputDriver : MonoBehaviour
             Vector3.down,
             groundCheckDistance + 0.1f,
             groundMask);
-
+        if (!_wasGrounded && _isGrounded)
+        {
+            _moveSystem.SetAirLock(false, Vector2.zero);
+        }
     }
 }
