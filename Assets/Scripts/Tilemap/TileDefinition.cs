@@ -9,4 +9,7 @@ public class TileDefinition : ScriptableObject
 
     public Sprite icon;
     public bool isPlayerTile;
+
+    [TextArea]
+    public string description; // <- 추가 (툴팁에 표시할 설명)
 }

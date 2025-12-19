@@ -97,6 +97,10 @@ public class TilePaletteUI : MonoBehaviour
         _cg.alpha = visible ? 1f : 0f;
         _cg.interactable = visible;
         _cg.blocksRaycasts = visible;
+
+        // Edit 모드가 아니면 툴팁은 반드시 내려가도록
+        if (!visible && TooltipUI.Instance)
+            TooltipUI.Instance.Hide();
     }
 
     private void Update()
@@ -147,22 +151,53 @@ public class TilePaletteUI : MonoBehaviour
             var btn = Instantiate(buttonPrefab, contentRoot);
             _buttons.Add(btn);
 
-            var images = btn.GetComponentsInChildren<Image>();
-            foreach (var img in images)
+            // ===== View로 UI 세팅 (아이콘/라벨 참조 안정화) =====
+            var view = btn.GetComponent<TileButtonView>();
+            if (view != null)
             {
-                if (img.gameObject.name == "Icon")
+                // 네 TileButtonView가 def/icon을 다루는 방식에 맞게 조정
+                view.Set(def, idx + 1);
+                // 만약 Set이 없다면 아래처럼 직접:
+                // view.Def = def;
+                // if (view.IconImage) { view.IconImage.sprite = def.icon; view.IconImage.enabled = def.icon != null; }
+            }
+            else
+            {
+                // fallback(뷰 없을 때만)
+                var label = btn.GetComponentInChildren<TMP_Text>(true);
+                if (label) label.text = $"{idx + 1}";
+
+                var icon = btn.transform.Find("Icon")?.GetComponent<Image>();
+                if (icon)
                 {
-                    img.sprite = def.icon;
-                    img.enabled = def.icon != null;
-                    break;
+                    icon.sprite = def.icon;
+                    icon.enabled = def.icon != null;
                 }
             }
 
-            var label = btn.GetComponentInChildren<TMP_Text>();
-            if (label) label.text = $"{idx + 1}";
-
+            // ===== 클릭 이벤트 =====
             btn.onClick.RemoveAllListeners();
             btn.onClick.AddListener(() => SelectIndex(idx));
+
+            // ===== TooltipTrigger =====
+            // 버튼 루트에 붙여도 되지만, 가장 확실한 건 "Target Graphic"이 붙은 오브젝트(보통 btn의 Image)에 붙이는 것
+            var triggerHost = btn.targetGraphic != null ? btn.targetGraphic.gameObject : btn.gameObject;
+
+            var tt = triggerHost.GetComponent<TooltipTrigger>();
+            if (tt == null) tt = triggerHost.AddComponent<TooltipTrigger>();
+
+            string desc = def.description;
+
+            if (string.IsNullOrWhiteSpace(desc))
+            {
+                tt.enabled = false;
+            }
+            else
+            {
+                tt.enabled = true;
+                tt.SetText(desc);
+                tt.hoverDelay = 0.6f;
+            }
 
             SetButtonColor(btn, normalColor);
         }

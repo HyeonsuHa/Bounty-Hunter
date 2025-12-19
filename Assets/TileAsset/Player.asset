@@ -17,3 +17,5 @@ MonoBehaviour:
   size: {x: 1, y: 1, z: 1}
   icon: {fileID: 21300000, guid: 3f29648cf0b0f2b4399dee6c3d46d376, type: 3}
   isPlayerTile: 1
+  description: "\uD50C\uB808\uC774\uC5B4 \uD0C0\uC77C, 1\uAC1C\uB9CC \uC124\uCE58
+    \uAC00\uB2A5\uD558\uB2E4."

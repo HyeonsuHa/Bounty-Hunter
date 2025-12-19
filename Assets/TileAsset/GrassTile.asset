@@ -16,3 +16,6 @@ MonoBehaviour:
   prefab: {fileID: 257945040953222876, guid: b24068153c35a274bb240702a5b52235, type: 3}
   size: {x: 1, y: 1, z: 1}
   icon: {fileID: 21300000, guid: 6e5581bdd1a48c540ac02d1525b49921, type: 3}
+  isPlayerTile: 0
+  description: "\uD3C9\uD3C9\uD55C \uD3C9\uC6D0 \uD0C0\uC77C, \uD53C\uD574\uB97C
+    \uC8FC\uC9C0 \uC54A\uB294 \uD0C0\uC77C"
